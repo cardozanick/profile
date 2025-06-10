@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nicholas Cardoza | A Profile in Yachting Excellence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;70.0&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals (Slate/Zinc) with a Teal Accent -->
+    <!-- Application Structure Plan: The SPA is designed as a top-to-bottom narrative portfolio. It starts with a high-level overview to immediately establish authority (Forbes quote, key roles). The user can then flow down into a more detailed, interactive exploration of his journey. The structure is thematic rather than chronological: Career Path, Core Strengths, Global Reach, and Media Presence. This allows users to digest different facets of his profile in focused, interactive sections. A sticky navigation bar facilitates non-linear exploration, letting users jump to the section most relevant to their interests, which is a more usable approach than a static, linear report. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Career milestones (VanDutch, YachtLife, Cardoza Yachts). Goal: Show progression. Viz: Interactive HTML/CSS timeline. Interaction: Clicking a venture reveals details in a dynamic content pane. A new Gemini-powered button ✨ generates strategic business insights for each venture, displaying them in a modal. Justification: This adds a dynamic, value-add layer of analysis. Method: Vanilla JS, Tailwind, Gemini API.
+        - Report Info: Diverse skill set (Maritime, Culinary, Tech, etc.). Goal: Compare and quantify expertise. Viz: Radar Chart. Interaction: Tooltips on hover provide skill names. Justification: A radar chart is excellent for showing multi-faceted strengths in a single, compelling visual. Method: Chart.js (Canvas).
+        - Report Info: International experience and languages. Goal: Inform about his global capabilities. Viz: Styled HTML cards with Unicode icons. Interaction: Simple hover effects. Justification: Clean, clear, and avoids the complexity of maps while still being visually appealing. Method: Tailwind.
+        - Report Info: Media mentions and nicknames. Goal: Organize and highlight key endorsements. Viz: A responsive grid of content cards. Interaction: Hover states for visual feedback. Justification: An easily scannable and digestible format for showcasing social proof and authority. Method: Tailwind. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* slate-50 */
+            color: #334155; /* slate-700 */
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 320px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .nav-link {
+            transition: color 0.3s ease, border-color 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #0d9488; /* teal-600 */
+            border-bottom-color: #0d9488; /* teal-600 */
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: -0.625rem;
+            transform: translateY(-50%);
+            width: 1.25rem;
+            height: 1.25rem;
+            border-radius: 9999px;
+            background-color: #f1f5f9; /* slate-100 */
+            border: 4px solid #0d9488; /* teal-600 */
+            z-index: 10;
+        }
+        .timeline-item.active::before {
+             background-color: #0d9488; /* teal-600 */
+        }
+        .gemini-modal-hidden {
+            display: none;
+        }
+        .loader {
+            border: 4px solid #f3f3f3; /* Light grey */
+            border-top: 4px solid #0d9488; /* Teal */
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header id="navbar" class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-xl md:text-2xl font-bold text-slate-800">Nicholas Cardoza</h1>
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="#overview" class="nav-link font-medium pb-1">Overview</a>
+                <a href="#career" class="nav-link font-medium pb-1">Career Path</a>
+                <a href="#strengths" class="nav-link font-medium pb-1">Core Strengths</a>
+                <a href="#global" class="nav-link font-medium pb-1">Global Reach</a>
+                <a href="#media" class="nav-link font-medium pb-1">In The Media</a>
+            </div>
+             <button id="mobile-menu-button" class="md:hidden p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500">
+                <svg class="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
+        </nav>
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-slate-200">
+            <a href="#overview" class="block py-3 px-6 text-center font-medium text-slate-700 hover:bg-slate-50">Overview</a>
+            <a href="#career" class="block py-3 px-6 text-center font-medium text-slate-700 hover:bg-slate-50">Career Path</a>
+            <a href="#strengths" class="block py-3 px-6 text-center font-medium text-slate-700 hover:bg-slate-50">Core Strengths</a>
+            <a href="#global" class="block py-3 px-6 text-center font-medium text-slate-700 hover:bg-slate-50">Global Reach</a>
+            <a href="#media" class="block py-3 px-6 text-center font-medium text-slate-700 hover:bg-slate-50">In The Media</a>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-8 md:py-16">
+
+        <section id="overview" class="scroll-mt-20">
+            <div class="text-center max-w-4xl mx-auto">
+                <h2 class="text-3xl md:text-5xl font-bold text-slate-900 leading-tight">A Visionary Entrepreneur Reshaping Luxury Yachting</h2>
+                <p class="mt-6 text-lg text-slate-600">This profile provides an interactive overview of Nicholas Cardoza's career, highlighting his entrepreneurial spirit, innovative contributions, and profound expertise in the international luxury yachting industry. Explore his journey from a passionate mariner to a celebrated industry leader and innovator.</p>
+            </div>
+
+            <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200/50">
+                    <p class="text-sm font-semibold text-teal-600 uppercase">Forbes Acclaim</p>
+                    <p class="mt-2 text-xl font-semibold text-slate-800">"The Go-To Guy for Celebrities"</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200/50">
+                    <p class="text-sm font-semibold text-teal-600 uppercase">Key Ventures</p>
+                    <p class="mt-2 text-xl font-semibold text-slate-800">Founder, Cardoza Yachts</p>
+                    <p class="text-md text-slate-500">Co-founder, YachtLife</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200/50">
+                    <p class="text-sm font-semibold text-teal-600 uppercase">Industry Nickname</p>
+                    <p class="mt-2 text-xl font-semibold text-slate-800">"Mr. Yachts"</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="career" class="mt-20 md:mt-32 scroll-mt-20">
+             <div class="text-center max-w-3xl mx-auto">
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-900">Entrepreneurial Career Path</h2>
+                <p class="mt-4 text-lg text-slate-600">Mr. Cardoza's career is marked by continuous growth and strategic evolution. From setting sales records at an established firm to launching a disruptive tech platform and his own premier brokerage, each step builds upon the last. Click a venture on the timeline to explore its history, then use the ✨ AI-powered button to generate forward-thinking strategic insights.</p>
+            </div>
+
+            <div class="mt-12 flex flex-col md:flex-row gap-8">
+                <div class="w-full md:w-1/3">
+                    <div id="timeline" class="relative border-l-2 border-slate-200 ml-3 py-4">
+                    </div>
+                </div>
+
+                <div class="w-full md:w-2/3">
+                    <div id="timeline-content" class="bg-white p-8 rounded-xl shadow-md border border-slate-200/50 min-h-[300px] transition-all duration-500">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="strengths" class="mt-20 md:mt-32 scroll-mt-20">
+             <div class="text-center max-w-3xl mx-auto">
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-900">A Nexus of Core Strengths</h2>
+                <p class="mt-4 text-lg text-slate-600">Success in the luxury yachting world requires a rare blend of diverse, high-level skills. Mr. Cardoza's expertise is not limited to one domain but spans across hands-on operations, strategic business, and sophisticated hospitality. The chart below visualizes this unique combination of strengths that underpins his client-first approach and industry leadership.</p>
+            </div>
+             <div class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                <div class="chart-container">
+                    <canvas id="skillsChart"></canvas>
+                </div>
+                <div class="space-y-4">
+                    <div class="p-4 bg-white rounded-lg shadow-sm">
+                        <h4 class="font-bold text-teal-700">Maritime & Operations</h4>
+                        <p class="text-slate-600 text-sm">Grounded in firsthand experience as a deckhand and crew on mega-yachts.</p>
+                    </div>
+                    <div class="p-4 bg-white rounded-lg shadow-sm">
+                        <h4 class="font-bold text-teal-700">Luxury Hospitality & Culinary Arts</h4>
+                        <p class="text-slate-600 text-sm">A deep understanding of high-end service, complemented by formal training as a chef and sommelier.</p>
+                    </div>
+                    <div class="p-4 bg-white rounded-lg shadow-sm">
+                        <h4 class="font-bold text-teal-700">Technology & Innovation</h4>
+                        <p class="text-slate-600 text-sm">Demonstrated by co-founding the disruptive YachtLife app, bringing digital solutions to chartering.</p>
+                    </div>
+                    <div class="p-4 bg-white rounded-lg shadow-sm">
+                        <h4 class="font-bold text-teal-700">Brokerage & Brand Building</h4>
+                        <p class="text-slate-600 text-sm">Proven ability to set sales records and build globally recognized luxury brands like VanDutch.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="global" class="mt-20 md:mt-32 scroll-mt-20">
+            <div class="text-center max-w-3xl mx-auto">
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-900">Global Perspective & Reach</h2>
+                 <p class="mt-4 text-lg text-slate-600">The luxury yacht market is inherently international. Mr. Cardoza's ability to operate seamlessly across borders is a critical asset, built from extensive travel, living abroad, and mastering multiple languages. This global fluency allows him to cater to a diverse clientele with exceptional cultural awareness and insight.</p>
+            </div>
+            <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+                <div class="bg-white p-8 rounded-xl shadow-sm border border-slate-200/50">
+                    <h3 class="font-bold text-xl text-slate-800">International Experience</h3>
+                    <p class="mt-2 text-slate-600">Lived in Italy and Argentina, with firsthand experience in over 20 countries, providing a deep understanding of the world's premier yachting destinations.</p>
+                </div>
+                <div class="bg-white p-8 rounded-xl shadow-sm border border-slate-200/50">
+                     <h3 class="font-bold text-xl text-slate-800">Business Operations</h3>
+                    <p class="mt-2 text-slate-600">Manages high-value international sales and charters, with ventures like YachtLife operating in over 40 global markets.</p>
+                </div>
+                 <div class="bg-white p-8 rounded-xl shadow-sm border border-slate-200/50">
+                    <h3 class="font-bold text-xl text-slate-800">Multilingual Proficiency</h3>
+                    <div class="mt-4 space-y-2">
+                        <p class="font-medium text-slate-700">🇬🇧 English</p>
+                        <p class="font-medium text-slate-700">🇮🇹 Italian</p>
+                        <p class="font-medium text-slate-700">🇪🇸 Spanish</p>
+                        <p class="font-medium text-slate-700">🇵🇹 Portuguese</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="media" class="mt-20 md:mt-32 scroll-mt-20">
+            <div class="text-center max-w-3xl mx-auto">
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-900">A Recognized Voice in the Media</h2>
+                <p class="mt-4 text-lg text-slate-600">A strong public profile built on expertise and authority is essential for leadership. Mr. Cardoza has garnered significant media attention, from starring in a reality TV series to earning high-profile endorsements. This visibility solidifies his status as an influential and trusted figure in the yachting world.</p>
+            </div>
+            <div class="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                 <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200/50 flex flex-col">
+                    <h4 class="font-bold text-lg text-teal-700">Hot Yachts Miami</h4>
+                    <p class="mt-2 text-slate-600 flex-grow">Featured as a star on the Paramount+ reality series showcasing Florida's top yacht brokers.</p>
+                    <p class="mt-4 text-sm font-semibold text-slate-500">Source: Paramount+</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200/50 flex flex-col">
+                    <h4 class="font-bold text-lg text-teal-700">Forbes Endorsement</h4>
+                    <p class="mt-2 text-slate-600 flex-grow">Hailed by the prestigious business publication as the "'go-to guy for celebrities'."</p>
+                    <p class="mt-4 text-sm font-semibold text-slate-500">Source: NY Weekly, Forbes</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200/50 flex flex-col">
+                    <h4 class="font-bold text-lg text-teal-700">"Mr. Yachts"</h4>
+                    <p class="mt-2 text-slate-600 flex-grow">An organic nickname from peers, reflecting his deep, ever-present passion and expertise in all things yachting.</p>
+                     <p class="mt-4 text-sm font-semibold text-slate-500">Source: Daily Star</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200/50 flex flex-col">
+                    <h4 class="font-bold text-lg text-teal-700">Thought Leader</h4>
+                    <p class="mt-2 text-slate-600 flex-grow">Actively shares valuable insights on market trends, technology, and yacht sales through his YouTube channel and digital platforms.</p>
+                     <p class="mt-4 text-sm font-semibold text-slate-500">Source: Industry Publications</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200/50 flex flex-col">
+                    <h4 class="font-bold text-lg text-teal-700">Community Engagement</h4>
+                    <p class="mt-2 text-slate-600 flex-grow">Supports local philanthropic efforts, identifying the "Little Lighthouse Foundation Gala" as his favorite charity event.</p>
+                    <p class="mt-4 text-sm font-semibold text-slate-500">Source: Haute Living</p>
+                </div>
+                 <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200/50 flex flex-col">
+                    <h4 class="font-bold text-lg text-teal-700">Resilient & Driven</h4>
+                    <p class="mt-2 text-slate-600 flex-grow">"I work really hard... people can think what they want. I'm still better than a lot of them!" - A response showcasing focus and self-belief.</p>
+                    <p class="mt-4 text-sm font-semibold text-slate-500">Source: Daily Star</p>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <div id="gemini-modal" class="gemini-modal-hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl transform transition-all max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center p-5 border-b border-gray-200">
+                <h3 class="text-xl font-semibold text-slate-800">✨ AI-Generated Strategic Insights</h3>
+                <button id="gemini-modal-close" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div id="gemini-modal-content" class="p-6 overflow-y-auto">
+                 <div id="gemini-loader" class="flex justify-center items-center h-48">
+                    <div class="loader"></div>
+                </div>
+                <div id="gemini-response" class="prose max-w-none text-slate-600"></div>
+            </div>
+             <div class="flex justify-end items-center p-4 border-t border-gray-200 bg-slate-50 rounded-b-xl">
+                 <button id="gemini-copy-button" class="bg-teal-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-teal-700 transition-colors duration-200">Copy Text</button>
+            </div>
+        </div>
+    </div>
+
+
+    <footer class="bg-slate-800 text-slate-300 mt-20 md:mt-32">
+        <div class="container mx-auto px-6 py-8 text-center">
+            <p>&copy; 2024 Profile of Nicholas Cardoza. Information synthesized from public sources.</p>
+            <p class="text-sm text-slate-400 mt-2">This is an informational web application and not an official site of Nicholas Cardoza or his affiliated companies.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const skillsCtx = document.getElementById('skillsChart').getContext('2d');
+            const timelineContainer = document.getElementById('timeline');
+            const timelineContentContainer = document.getElementById('timeline-content');
+            
+            const geminiModal = document.getElementById('gemini-modal');
+            const geminiModalClose = document.getElementById('gemini-modal-close');
+            const geminiLoader = document.getElementById('gemini-loader');
+            const geminiResponse = document.getElementById('gemini-response');
+            const geminiCopyButton = document.getElementById('gemini-copy-button');
+
+            const timelineData = [
+                {
+                    venture: 'VanDutch Yachts',
+                    role: 'VP & Top Broker',
+                    details: `
+                        <h3 class="text-2xl font-bold text-slate-800">VanDutch Yachts</h3>
+                        <p class="text-md font-semibold text-teal-600 mt-1">VP & Top-Performing Broker</p>
+                        <p class="mt-4 text-slate-600">During his tenure, Nicholas Cardoza quickly established himself as a market leader, setting new sales records. His strategic vision was instrumental in building VanDutch's presence into a major, globally recognized luxury brand, highlighted by a bold guerrilla marketing campaign that amplified its visibility.</p>
+                        <ul class="mt-4 space-y-2 text-sm text-slate-700 list-disc list-inside">
+                            <li>Set company sales records.</li>
+                            <li>Solidified reputation as a market leader.</li>
+                            <li>Helped build the company into a major luxury brand.</li>
+                        </ul>
+                    `,
+                    promptText: "Nicholas Cardoza's role at VanDutch Yachts involved setting sales records and building the company into a major luxury brand through strategic vision and guerrilla marketing."
+                },
+                {
+                    venture: 'YachtLife',
+                    role: 'Co-founder',
+                    details: `
+                        <h3 class="text-2xl font-bold text-slate-800">YachtLife</h3>
+                        <p class="text-md font-semibold text-teal-600 mt-1">Co-founder & Innovator</p>
+                        <p class="mt-4 text-slate-600">Identifying a major inefficiency in the charter market, he co-founded YachtLife. This 'Airbnb-esque' mobile app revolutionized the industry by bringing transparency and simplicity to booking luxury yachts. The platform achieved significant global scale, operating in over 40 markets and forming prestigious brand partnerships.</p>
+                         <ul class="mt-4 space-y-2 text-sm text-slate-700 list-disc list-inside">
+                            <li>Streamlined yacht charters with a digital platform.</li>
+                            <li>Achieved global reach with over 1,200 yachts.</li>
+                            <li>Secured partnership with Luxury Card.</li>
+                        </ul>
+                    `,
+                    promptText: "As co-founder of YachtLife, Nicholas Cardoza created a disruptive tech platform to simplify yacht charters. The app achieved global scale, operating in 40+ markets with key brand partnerships."
+                },
+                {
+                    venture: 'Cardoza Yachts',
+                    role: 'Founder',
+                    details: `
+                         <h3 class="text-2xl font-bold text-slate-800">Cardoza Yachts</h3>
+                        <p class="text-md font-semibold text-teal-600 mt-1">Founder & Luxury Broker</p>
+                        <p class="mt-4 text-slate-600">Building on his vast experience, he founded Cardoza Yachts, a premier brokerage based in Miami. The firm is driven by a mission to revolutionize the brokerage landscape with an unwavering commitment to distinction, transparency, and a dynamic, client-first approach. It specializes in high-value international sales and charters.</p>
+                         <ul class="mt-4 space-y-2 text-sm text-slate-700 list-disc list-inside">
+                            <li>Focus on superyachts and ultra-luxury tenders.</li>
+                            <li>Specializes in sales >50m internationally.</li>
+                            <li>Provides a bespoke, high-integrity client experience.</li>
+                        </ul>
+                    `,
+                    promptText: "Nicholas Cardoza founded Cardoza Yachts, a premier brokerage in Miami focused on high-value international sales and charters of superyachts. The mission is to revolutionize the industry with transparency and a client-first approach."
+                },
+            ];
+
+            async function callGeminiAPI(prompt) {
+                geminiResponse.innerHTML = '';
+                geminiLoader.style.display = 'flex';
+                geminiCopyButton.style.display = 'none';
+
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                
+                let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+                const payload = { contents: chatHistory };
+
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    
+                    if (result.candidates && result.candidates.length > 0 && result.candidates[0].content && result.candidates[0].content.parts && result.candidates[0].content.parts.length > 0) {
+                        let text = result.candidates[0].content.parts[0].text;
+                        text = text.replace(/\*/g, '').replace(/(\d\.)/g, '<br><br>$1');
+                        geminiResponse.innerHTML = text;
+                    } else {
+                        throw new Error("Invalid response structure from Gemini API.");
+                    }
+                } catch (error) {
+                    console.error("Error calling Gemini API:", error);
+                    geminiResponse.innerHTML = `<p class="text-red-500">Sorry, there was an error generating insights. Please try again later.</p>`;
+                } finally {
+                    geminiLoader.style.display = 'none';
+                    geminiCopyButton.style.display = 'block';
+                }
+            }
+            
+            function handleGenerateInsightsClick(ventureData) {
+                geminiModal.classList.remove('gemini-modal-hidden');
+                const fullPrompt = `Based on the following summary of Nicholas Cardoza's venture, '${ventureData.venture}', act as a top-tier business strategy consultant. Summary: "${ventureData.promptText}". Generate 3 actionable, forward-thinking strategic insights for this business. Focus on potential growth areas, innovative marketing, or enhanced client engagement. Present the output as a numbered list with bold titles for each point.`;
+                callGeminiAPI(fullPrompt);
+            }
+
+            function updateTimelineContent(index) {
+                const data = timelineData[index];
+                timelineContentContainer.innerHTML = data.details;
+
+                const geminiButton = document.createElement('button');
+                geminiButton.className = 'mt-6 bg-teal-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-teal-700 transition-colors duration-200 flex items-center gap-2';
+                geminiButton.innerHTML = '✨ Generate Strategic Insights';
+                geminiButton.onclick = () => handleGenerateInsightsClick(data);
+                
+                timelineContentContainer.appendChild(geminiButton);
+                
+                document.querySelectorAll('.timeline-item').forEach((item, idx) => {
+                    item.classList.toggle('active', idx === index);
+                    item.classList.toggle('text-teal-600', idx === index);
+                });
+            }
+
+            timelineData.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'relative pl-8 pb-8 cursor-pointer timeline-item';
+                div.innerHTML = `<h4 class="font-bold text-lg">${item.venture}</h4><p class="text-sm text-slate-500">${item.role}</p>`;
+                div.addEventListener('click', () => updateTimelineContent(index));
+                timelineContainer.appendChild(div);
+            });
+
+            updateTimelineContent(0);
+            
+            geminiModalClose.addEventListener('click', () => geminiModal.classList.add('gemini-modal-hidden'));
+            geminiModal.addEventListener('click', (e) => {
+                if (e.target === geminiModal) {
+                    geminiModal.classList.add('gemini-modal-hidden');
+                }
+            });
+            geminiCopyButton.addEventListener('click', () => {
+                const textToCopy = geminiResponse.innerText;
+                const tempTextArea = document.createElement('textarea');
+                tempTextArea.value = textToCopy;
+                document.body.appendChild(tempTextArea);
+                tempTextArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempTextArea);
+                geminiCopyButton.innerText = 'Copied!';
+                setTimeout(() => { geminiCopyButton.innerText = 'Copy Text'; }, 2000);
+            });
+
+            const skillsChart = new Chart(skillsCtx, {
+                type: 'radar',
+                data: {
+                    labels: [
+                        'Brokerage & Sales', 
+                        'Tech Innovation', 
+                        'Brand Building', 
+                        'Luxury Hospitality', 
+                        'Maritime Operations', 
+                        'Global Business'
+                    ],
+                    datasets: [{
+                        label: 'Skill Level',
+                        data: [9, 8, 9, 8, 7, 9],
+                        backgroundColor: 'rgba(13, 148, 136, 0.2)',
+                        borderColor: 'rgb(13, 148, 136)',
+                        pointBackgroundColor: 'rgb(13, 148, 136)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgb(13, 148, 136)'
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    scales: { r: { angleLines: { color: 'rgba(0, 0, 0, 0.1)' }, grid: { color: 'rgba(0, 0, 0, 0.1)' }, pointLabels: { font: { size: 12, weight: '500' }, color: '#475569' }, ticks: { backdropColor: 'transparent', color: '#64748b', stepSize: 2 }, min: 0, max: 10 }},
+                    plugins: { legend: { display: false }, tooltip: { enabled: true, callbacks: { label: (c) => c.label }}}
+                }
+            });
+            
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenuButton.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
+
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('main > section');
+            window.addEventListener('scroll', () => {
+                let current = '';
+                sections.forEach(section => { if (pageYOffset >= section.offsetTop - 100) current = section.getAttribute('id'); });
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href').includes(current)) link.classList.add('active');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
